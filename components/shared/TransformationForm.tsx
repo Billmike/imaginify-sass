@@ -36,11 +36,16 @@ const TransformationForm = ({
   userId,
   type,
   creditBalance,
+  config = null,
 }: TransformationFormProps) => {
   const transformationType = transformationTypes[type];
   const [image, setImage] = React.useState(data);
   const [newTransformation, setNewTransformation] =
     React.useState<Transformations | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isTransforming, setIsTransforming] = React.useState(false);
+  const [transformationConfig, setTransformationConfig] =
+    React.useState(config);
 
   const initialFormValues =
     data && action === "Update"
@@ -74,6 +79,8 @@ const TransformationForm = ({
     type: string,
     onChangeField: (value: string) => void
   ) {}
+
+  function onTransformHandler() {}
 
   return (
     <Form {...form}>
@@ -135,8 +142,47 @@ const TransformationForm = ({
                 />
               )}
             />
+            {type === "recolor" && (
+              <CustomField
+                control={form.control}
+                name="color"
+                formLabel="Replacement Color"
+                className="w-full"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    className="input-field"
+                    onChange={(event) =>
+                      onInputChangeHandler(
+                        "color",
+                        event.target.value,
+                        "recolor",
+                        field.onChange
+                      )
+                    }
+                  />
+                )}
+              />
+            )}
           </div>
         )}
+        <div className="flex flex-col gap-4">
+          <Button
+            className="submit-button capitalize"
+            type="button"
+            disabled={isTransforming || newTransformation === null}
+            onClick={onTransformHandler}
+          >
+            {isTransforming ? "Transforming..." : "Apply Transformation"}
+          </Button>
+          <Button
+            className="submit-button capitalize"
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : "Save Image"}
+          </Button>
+        </div>
       </form>
     </Form>
   );
