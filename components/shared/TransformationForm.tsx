@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { startTransition, useTransition } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AspectRatioKey } from "@/lib/utils";
+import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
+import { updateCredits } from "@/lib/actions/user.actions";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -71,16 +72,52 @@ const TransformationForm = ({
   function onSelectFieldHandler(
     value: string,
     onChangeField: (value: string) => void
-  ) {}
+  ) {
+    const imageSize = aspectRatioOptions[value as AspectRatioKey];
+    setImage((prevState: any) => ({
+      ...prevState,
+      aspectRatio: imageSize.aspectRatio,
+      width: imageSize.width,
+      height: imageSize.height,
+    }));
+
+    setNewTransformation(transformationType.config);
+
+    return onChangeField(value);
+  }
 
   function onInputChangeHandler(
     fieldName: string,
     value: string,
     type: string,
     onChangeField: (value: string) => void
-  ) {}
+  ) {
+    debounce(() => {
+      setNewTransformation((prevState: any) => ({
+        ...prevState,
+        [type]: {
+          ...prevState[type],
+          [fieldName === "prompt" ? "prompt" : "to"]: value,
+        },
+      }));
 
-  function onTransformHandler() {}
+      return onChangeField(value);
+    }, 1000);
+  }
+
+  async function onTransformHandler() {
+    setIsTransforming(true);
+
+    setTransformationConfig(
+      deepMergeObjects(newTransformation, transformationConfig)
+    );
+
+    setNewTransformation(null);
+
+    // startTransition(async () => {
+    //   // await updateCredits
+    // });
+  }
 
   return (
     <Form {...form}>
